@@ -8,9 +8,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="https://unpkg.com/mvp.css">
 	<style>
-		input{
+		input {
 			width: 20%
 		}
+
 		input:invalid {
 			border: 2px dashed red;
 		}
@@ -45,8 +46,9 @@
 		</aside>
 	</section>
 	<script>
-
+		const urlConnect = 'http://localhost:3000/connect';
 		const url = 'http://localhost:3000/toroman/';
+
 		const initDetails = {
 			method: 'get',
 			headers: {
@@ -57,31 +59,37 @@
 		const numMax = 100;
 		const numMin = 1;
 
+		(function registerEvents() {
+			var evtSource = new EventSource(urlConnect);
+			evtSource.onmessage = function (event) {
+				setResult(JSON.parse(event.data).result);
+			}
+			evtSource.onerror = function (event) {
+				evtSource.close();
+				alert('event source got an error, reload the page and try again please');
+			};
+		})();
+
 		document.getElementById("submit-button").addEventListener("click", function (event) {
 			event.preventDefault();
-			getData();
+			postDataToServer();
 		});
 
-		async function getData() {
+		async function postDataToServer() {
 			hideErrorBox();
 			var valueToParse = getElement('number-to-roman').value;
 			valueToParse = Number(valueToParse);
 			if (isNaN(valueToParse) || valueToParse > numMax || valueToParse < numMin) {
 				showErrorBox(`number should be between ${numMin} and ${numMax}`)
 				return
-			}
-			disableButton('submit-button');
-			
-			try {
-				var response = await fetch(url + valueToParse, initDetails);
-				var data = await response.json();
-				if (!response.ok) throw data
-				setResult(data.result);
-			} catch (error) {
-				showErrorBox(error);
-				console.log('error', error);
-			} finally {
-				enableButton('submit-button');
+			} else {
+				try {
+					var response = await fetch(url + valueToParse, initDetails);
+					var data = await response.json();
+					if (!response.ok) throw data
+				} catch (error) {
+					showErrorBox(error);
+				}
 			}
 		}
 
@@ -97,8 +105,8 @@
 			getElement(id).disabled = false;
 		}
 
-		function setResult(message = ''){
-			getElement('result').textContent = message
+		function setResult(message = '') {
+			getElement('result').textContent = '' + message
 		}
 
 		function showErrorBox(message) {
