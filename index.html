@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>App</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://unpkg.com/mvp.css">
+	<style>
+		input{
+			width: 20%
+		}
+		input:invalid {
+			border: 2px dashed red;
+		}
+
+		input:valid {
+			border: 2px solid black;
+		}
+
+		#error-box {
+			display: none;
+			background-color: red;
+		}
+	</style>
+</head>
+
+<body>
+
+	<section>
+		<form>
+			<header>
+				<h2>Application for Jolimoi Joao Nabais</h2>
+			</header>
+			<label for="input1">Input label:</label>
+			<input type="number" id="number-to-roman" name="number-to-roman" min="1" max="100">
+			<button id="submit-button">Translate to Roman</button>
+		</form>
+	</section>
+	<section>
+		<h1 id="result"></h1>
+		<aside id="error-box">
+			<p id="error-message"></p>
+		</aside>
+	</section>
+	<script>
+
+		const url = 'http://localhost:3000/toroman/';
+		const initDetails = {
+			method: 'get',
+			headers: {
+				"Content-Type": "application/json; charset=utf-8"
+			},
+			mode: "cors"
+		}
+		const numMax = 100;
+		const numMin = 1;
+
+		document.getElementById("submit-button").addEventListener("click", function (event) {
+			event.preventDefault();
+			getData();
+		});
+
+		async function getData() {
+			hideErrorBox();
+			var valueToParse = getElement('number-to-roman').value;
+			valueToParse = Number(valueToParse);
+			if (isNaN(valueToParse) || valueToParse > numMax || valueToParse < numMin) {
+				showErrorBox(`number should be between ${numMin} and ${numMax}`)
+				return
+			}
+			disableButton('submit-button');
+			
+			try {
+				var response = await fetch(url + valueToParse, initDetails);
+				var data = await response.json();
+				if (!response.ok) throw data
+				setResult(data.result);
+			} catch (error) {
+				showErrorBox(error);
+				console.log('error', error);
+			} finally {
+				enableButton('submit-button');
+			}
+		}
+
+		function getElement(id) {
+			return document.getElementById(id);
+		}
+
+		function disableButton(id) {
+			getElement(id).disabled = true;
+		}
+
+		function enableButton(id) {
+			getElement(id).disabled = false;
+		}
+
+		function setResult(message = ''){
+			getElement('result').textContent = message
+		}
+
+		function showErrorBox(message) {
+			setResult();
+			getElement('error-box').style.display = 'block';
+			getElement('error-message').textContent = message;
+		}
+
+		function hideErrorBox(id) {
+			getElement('error-box').style.display = 'none';
+			getElement('error-message').textContent = '';
+		}
+	</script>
+
+</body>
+
+</html>
